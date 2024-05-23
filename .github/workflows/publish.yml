@@ -1,0 +1,50 @@
+name: Publish Python Package
+
+on:
+  push:
+    branches:
+      - main
+      - 'issue/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Ensure full history is available for git describe
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11.9'
+
+    - name: Install Poetry
+      run: curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Extract version using git_semver.py
+      id: get_version
+      run: |
+        python3 git_semver.py > semver.txt
+        SEMVER=$(cat semver.txt)
+        echo "SEMVER=$SEMVER" >> $GITHUB_ENV
+        echo "Extracted version: $SEMVER"
+
+    - name: Set the version in pyproject.toml
+      run: poetry version ${{ env.SEMVER }}
+
+    - name: Build package
+      run: poetry build
+
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      run: twine upload dist/*
