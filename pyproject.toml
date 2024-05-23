@@ -2,10 +2,12 @@
 name = "xrvoyage"
 version = "0.0.0"
 description = "XR Voyage Python Package"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Peter Styk <peter@neux.io>"]
 packages = [
     { include = "xrvoyage" },
 ]
+[tool.poetry.dependencies]
+python = ">=3.11.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "setuptools>=42", "wheel", "setuptools_scm"]
