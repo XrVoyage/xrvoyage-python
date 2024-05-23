@@ -3,11 +3,11 @@ name: Publish Python Package
 on:
   push:
     branches:
-      - master
+      - main
       - 'issue/*'
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -29,6 +29,16 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
+    - name: Extract version using setuptools_scm
+      id: get_version
+      run: |
+        VERSION=$(python -c "import setuptools_scm; print(setuptools_scm.get_version())")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Version is $VERSION"
+
+    - name: Set the version in pyproject.toml
+      run: poetry version ${{ env.VERSION }}
+
     - name: Build package
       run: poetry build
 
@@ -36,13 +46,4 @@ jobs:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: |
-        # Extract version using setuptools_scm
-        VERSION=$(python -c "import setuptools_scm; print(setuptools_scm.get_version())")
-        echo "VERSION=$VERSION" > $GITHUB_ENV
-        # Verify the version is correct
-        poetry version $VERSION
-        # Build the package
-        poetry build
-        # Publish the package using twine
-        twine upload dist/*
+      run: twine upload dist/*
