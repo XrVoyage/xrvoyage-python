@@ -40,12 +40,9 @@ jobs:
     - name: Set the version in pyproject.toml
       run: poetry version ${{ env.SEMVER }}
 
-    - name: Install setuptools_scm
-      run: pip install setuptools_scm
-
     - name: Generate _version.py
       run: |
-        python -c "from setuptools_scm import get_version; version = get_version(); open('xrvoyage/_version.py', 'w').write(f'version = \"{version}\"\n')"
+        echo "version = '${{ env.SEMVER }}'" > xrvoyage/_version.py
 
     - name: Build package
       run: poetry build
