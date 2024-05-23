@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "xrvoyage"
+version = "0.0.0"
+description = "XR Voyage Python Package"
+authors = ["Your Name <your.email@example.com>"]
+packages = [
+    { include = "xrvoyage" },
+]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "setuptools>=42", "wheel", "setuptools_scm"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+write_to = "xrvoyage/_version.py"
