@@ -43,6 +43,9 @@ jobs:
     - name: Build package
       run: poetry build
 
+    - name: Install twine
+      run: pip install twine
+
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
