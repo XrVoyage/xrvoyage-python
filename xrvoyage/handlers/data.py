@@ -1,9 +1,9 @@
 import requests
 
-from .auth import TokenStrategy
+from ..auth import TokenStrategy
 from ..models.data import DataWebhookEvent
 from ..config.config import get_app_config
-from .exceptions import ApiError
+from ..exceptions import ApiError
 
 
 class DataHandler:
