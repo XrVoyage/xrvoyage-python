@@ -6,7 +6,7 @@ import websockets
 import logzero
 
 from ..models.events import XRWebhookEventBatch
-from . import auth
+from .auth import TokenStrategy
 from ..config.config import get_app_config
 from .exceptions import WssConnectionError
 
@@ -15,9 +15,15 @@ settings = get_app_config()
 EventCallback = Callable[[XRWebhookEventBatch], None]
 
 
-class XrWssClient:
-    def __init__(self) -> None:
-        self._token_strategy = auth.get_token_strategy()
+class WssHandler:
+    def __init__(self, token_strategy: TokenStrategy) -> None:
+        """
+        Websockets Handler Constructor
+
+        Args:
+            token_strategy (TokenStrategy): The strategy to get the API token.
+        """
+        self._token_strategy = token_strategy
 
     async def _listen_async(self, guid: str, cb: EventCallback) -> None:
         token = self._token_strategy.get_token()
