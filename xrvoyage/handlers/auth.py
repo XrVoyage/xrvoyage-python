@@ -16,8 +16,9 @@ def _is_token_expired(token: str) -> bool:
         current_time = time.time()
         if current_time > exp or current_time >= (exp - 60):
             return True
-    except (jwt.ExpiredSignatureError, Exception):
-        logzero.logger.debug('Token could not be decoded')
+        return False
+    except Exception as e:
+        logzero.logger.debug('Token could not be decoded', e)
         raise InvalidCredentialsError('Could not decode token')
 
 
