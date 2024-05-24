@@ -5,11 +5,8 @@ import jwt
 import requests
 import logzero
 
-
 from ..config.config import get_app_config
 from .exceptions import InvalidCredentialsError
-
-settings = get_app_config()
 
 
 def _is_token_expired(token: str) -> bool:
@@ -36,6 +33,7 @@ class _AccessAndSecretKeyTokenStrategy(TokenStrategy):
         self._refresh_token = None
 
     def _login(self):
+        settings = get_app_config()
         credentials = {
             "access_key": settings.XRVOYAGE_ACCESS_KEY_ID,
             "secret_key": settings.XRVOYAGE_SECRET_ACCESS_KEY
@@ -55,6 +53,7 @@ class _AccessAndSecretKeyTokenStrategy(TokenStrategy):
         credentials = {
             "refresh_token": self._refresh_token
         }
+        settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/oidc/refresh'
         response = requests.post(url, json=credentials)
@@ -83,6 +82,7 @@ class _AccessAndSecretKeyTokenStrategy(TokenStrategy):
 
 class _TemporaryTokenStrategy(TokenStrategy):
     def get_token(self):
+        settings = get_app_config()
         token = settings.XRVOYAGE_SESSION_TOKEN
         if _is_token_expired(token):
             raise InvalidCredentialsError('The provided XRVOYAGE_SESSION_TOKEN is expired.')
@@ -90,6 +90,7 @@ class _TemporaryTokenStrategy(TokenStrategy):
 
 
 def _check_credentials():
+    settings = get_app_config()
     cred_envs = [
         settings.XRVOYAGE_SESSION_TOKEN,
         settings.XRVOYAGE_SECRET_ACCESS_KEY,
@@ -130,6 +131,7 @@ def _check_credentials():
 def get_token_strategy() -> TokenStrategy:
     _check_credentials()
 
+    settings = get_app_config()
     if settings.XRVOYAGE_SESSION_TOKEN is not None:
         return _TemporaryTokenStrategy()
 

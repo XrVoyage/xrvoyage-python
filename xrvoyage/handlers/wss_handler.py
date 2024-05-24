@@ -10,8 +10,6 @@ from .auth import TokenStrategy
 from ..config.config import get_app_config
 from .exceptions import WssConnectionError
 
-settings = get_app_config()
-
 EventCallback = Callable[[XRWebhookEventBatch], None]
 
 
@@ -26,6 +24,7 @@ class WssHandler:
         self._token_strategy = token_strategy
 
     async def _listen_async(self, guid: str, cb: EventCallback) -> None:
+        settings = get_app_config()
         token = self._token_strategy.get_token()
         ws_url = f"{settings.XRVOYAGE_WEBSOCKETS_BASE_URL}/v2/ship/{guid}/?token={token}"
 
@@ -58,11 +57,12 @@ class WssHandler:
             xrvoyage.handlers.exceptions.WssConnectionError: Connection to websockets server.
         """
         coro = self._listen_async(ship_guid, callback)
-        
+
         try:
             # Check if an event loop is already running
             loop = asyncio.get_running_loop()
-            loop.create_task(coro)
+            task = loop.create_task(coro)
+            asyncio.gather(task)
         except RuntimeError:
             # No event loop is running, start a new one
             asyncio.run(coro)
