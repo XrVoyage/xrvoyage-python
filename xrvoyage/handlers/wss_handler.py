@@ -44,7 +44,7 @@ class WssHandler:
 
     def connect(self, ship_guid: str, callback: EventCallback) -> None:
         """
-        Connects to the Webscokets server and listens for ship events.
+        Connects to the Websockets server and listens for ship events.
 
         Args:
             ship_guid (str): The guid for the ship whose events we want to listen to.
@@ -58,4 +58,11 @@ class WssHandler:
             xrvoyage.handlers.exceptions.WssConnectionError: Connection to websockets server.
         """
         coro = self._listen_async(ship_guid, callback)
-        asyncio.run(coro)
+        
+        try:
+            # Check if an event loop is already running
+            loop = asyncio.get_running_loop()
+            loop.create_task(coro)
+        except RuntimeError:
+            # No event loop is running, start a new one
+            asyncio.run(coro)
