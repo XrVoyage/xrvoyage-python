@@ -5,7 +5,7 @@ import jwt
 import requests
 import logzero
 
-from config.config import get_app_config
+from .config.config import get_app_config
 from .exceptions import InvalidCredentialsError
 
 
