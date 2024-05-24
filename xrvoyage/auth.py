@@ -5,8 +5,8 @@ import jwt
 import requests
 import logzero
 
-from .config.config import get_app_config
-from .exceptions import InvalidCredentialsError
+from xrvoyage.config.config import get_app_config
+from xrvoyage.exceptions import InvalidCredentialsError
 
 
 def _is_token_expired(token: str) -> bool:
