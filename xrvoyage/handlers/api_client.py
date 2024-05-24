@@ -1,6 +1,7 @@
 from .data_handler import DataHandler
 from .job_handler import JobHandler
 from .wss_handler import WssHandler
+from .xrevents_handler import XREventsHandler
 from .auth import get_token_strategy
 
 
@@ -10,3 +11,4 @@ class XrApiClient:
         self.data = DataHandler(token_strategy)
         self.job = JobHandler(token_strategy)
         self.wss = WssHandler(token_strategy)
+        self.events = XREventsHandler(token_strategy)

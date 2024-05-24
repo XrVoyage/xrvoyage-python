@@ -33,3 +33,7 @@ class XRWebhookEventBatch(pydantic.BaseModel):
         alias='xr.data',
         default=None
     )
+    xr_nrt: List[XRWebhookEvent] | None = pydantic.Field(
+        alias='xr.nrt',
+        default=None
+    )
