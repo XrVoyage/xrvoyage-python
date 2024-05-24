@@ -1,10 +1,9 @@
 from functools import lru_cache
 
-import pydantic
 from decouple import config
 
 
-class BaseSettings(pydantic.BaseModel):
+class BaseSettings:
     XRVOYAGE_WEBSOCKETS_BASE_URL: str = 'wss://ws.xr.voyage'
     XRVOYAGE_API_BASE_URL: str = 'https://apiv2.xr.voyage'
 
