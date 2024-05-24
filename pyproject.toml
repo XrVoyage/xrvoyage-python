@@ -23,3 +23,16 @@ build-backend = "poetry.core.masonry.api"
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
 write_to = "xrvoyage/_version.py"
+
+[tool.poetry.dev-dependencies]
+pytest = ">=6.2,<7.0"
+pytest-asyncio = "^0.15.1"
+python-dotenv = "^0.19.2"
+pytest-dependency = "^0.6.0"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests"
+]
