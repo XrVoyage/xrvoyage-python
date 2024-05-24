@@ -16,7 +16,7 @@ class DataHandler:
         """
         self._token_strategy = token_strategy
 
-    def post_webook(self, webhook_id: str, event: DataWebhookEvent) -> None:
+    def post_webhook(self, webhook_id: str, event: DataWebhookEvent) -> None:
         """
         Send an event payload to a data webhook endpoint.
 

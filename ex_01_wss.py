@@ -18,15 +18,21 @@ print("XrVoyage Version: ", xrvoyage.__version__)
 xr = XrApiClient()
 ship_guid = "C9EECCC7826249E386B45B78D8A14B19"
 
-@eventIngress("xr.data.some-data-id2")
+@eventIngress("xr.data.wh1")
 def handle_some_data(event: XRWebhookEventBatch):
-    print("Handling event of type 'xr.data.some-data-id2'")
+    print("Handling event of type 'xr.data.wh1'")
     print("Event data:", event)
 
 async def main():
     # Connect to the WebSocket and listen for events
     xr.wss.connect(ship_guid)
-    print ("not holding")
+    print("not holding")
+    
+    # Call the function from 02.test-datahook.py to send the payload
+    from ex_02_datahook import DataHookTester
+    tester = DataHookTester(xr)
+    response = tester.send_test_payload()
+    print(response)
 
     try:
         # Run the event loop for a while to demonstrate
@@ -34,8 +40,6 @@ async def main():
     finally:
         # Destroy the WebSocket connection when done
         await xr.wss.destroy()
-
-
 
 if __name__ == "__main__":
     asyncio.run(main())
