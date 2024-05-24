@@ -57,6 +57,8 @@ class WssHandler:
                         event_handlers[event_type](parsed_event)
                     else:
                         logger.warning(f"No handler registered for event type: {event_type}")
+        except websockets.exceptions.ConnectionClosedOK:
+            logger.info('Websocket connection closed normally.')
         except Exception as e:
             logger.error(f'Error in websocket connection: {e}')
             raise WssConnectionError(str(e))

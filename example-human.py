@@ -1,8 +1,8 @@
 import os
 import asyncio
 import xrvoyage
-from xrvoyage.handlers.api_client import XrApiClient
-from xrvoyage.handlers.wss_handler import WssHandler, eventIngress
+from xrvoyage import XrApiClient
+from xrvoyage.handlers.wss import WssHandler, eventIngress
 from xrvoyage.models.events import XRWebhookEventBatch
 from dotenv import load_dotenv
 
@@ -34,7 +34,6 @@ async def main():
     finally:
         # Destroy the WebSocket connection when done
         await xr.wss.destroy()
-
 
 
 
