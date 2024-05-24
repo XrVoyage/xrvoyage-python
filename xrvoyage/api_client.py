@@ -1,8 +1,8 @@
-from .handlers.data import DataHandler
-from .handlers.job import JobHandler
-from .handlers.wss import WssHandler
-from .handlers.xrevents import XREventsHandler
-from .auth import get_token_strategy
+from xrvoyage.handlers.data import DataHandler
+from xrvoyage.handlers.job import JobHandler
+from xrvoyage.handlers.wss import WssHandler
+from xrvoyage.handlers.xrevents import XREventsHandler
+from xrvoyage.auth import get_token_strategy
 
 
 class XrApiClient:
