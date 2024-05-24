@@ -11,8 +11,8 @@ class XRWebhookEvent(pydantic.BaseModel):
     source: str | None = None
     type: str
     args: Dict[str, Any]
-    sender_sub: str
-    sender_username: str
+    sender_sub: str | None = None
+    sender_username: str | None = None
     guid: str | None = None  # <- Some events don't have a guid since they are not saved in Mongo
     created_utc: str | None = None  # <- Some events don't have a created_utc since they are not saved in Mongo
 

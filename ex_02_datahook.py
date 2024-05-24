@@ -8,7 +8,7 @@ class DataHookTester:
     
     def send_test_payload(self):
         payload = DataWebhookEvent(
-            type="xr.data.some-data-id2",
+            type="xr.data.wh1",
             args={
                 "key1": "value1",
                 "key2": "value2",
@@ -16,8 +16,6 @@ class DataHookTester:
                 "key4": "value4"
             },
             project_guid="C7138CAE3EF14008ADEC225F368F376A",
-            sender_sub="example_sender_sub",  # Add appropriate value
-            sender_username="example_sender_username"  # Add appropriate value
         )
         
         response = self.xr.data.post_webhook(self.webhook_id, payload)
