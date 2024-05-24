@@ -6,9 +6,9 @@ import websockets
 import logzero
 
 from ..models.events import XRWebhookEventBatch
-from .auth import TokenStrategy
+from ..auth import TokenStrategy
 from ..config.config import get_app_config
-from .exceptions import WssConnectionError
+from ..exceptions import WssConnectionError
 
 EventCallback = Callable[[XRWebhookEventBatch], None]
 
