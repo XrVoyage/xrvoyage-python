@@ -31,7 +31,7 @@ class DataHandler:
         response = requests.post(
             url,
             headers={'Authorization': f'Bearer {token}'},
-            json=event.json()
+            json=event.model_dump()
         )
         if not response.ok:
             raise ApiError(status_code=response.status_code, body=response.text)
