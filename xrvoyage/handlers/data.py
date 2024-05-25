@@ -35,3 +35,4 @@ class DataHandler:
         )
         if not response.ok:
             raise ApiError(status_code=response.status_code, body=response.text)
+        return response.json()
