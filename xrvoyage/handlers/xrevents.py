@@ -30,7 +30,7 @@ class XREventsHandler:
         response = requests.post(
             url,
             headers={'Authorization': f'Bearer {token}'},
-            json=event_batch.model_dump()
+            json=event_batch.model_dump(by_alias=True)
         )
         if not response.ok:
             raise ApiError(status_code=response.status_code, body=response.text)
@@ -50,7 +50,7 @@ class XREventsHandler:
         response = requests.post(
             url,
             headers={'Authorization': f'Bearer {token}'},
-            json=event.model_dump()
+            json=event.model_dump(by_alias=True)
         )
         if not response.ok:
             raise ApiError(status_code=response.status_code, body=response.text)

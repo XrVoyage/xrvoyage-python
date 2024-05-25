@@ -67,25 +67,32 @@ class XREventsTester:
                     "type": "xr.rt.status.ship.crew",
                     "args": {}
                 }
+
             ]
         }
         '''
         
         payload_dict = json.loads(payload_str)
         
-        event = XRWebhookEvent(
-            # source=payload_dict["xr.rt"][0]["source"],
-            type=payload_dict["xr.rt"][0]["type"],
-            args=payload_dict["xr.rt"][0]["args"]
-            # client=payload_dict["xr.rt"][0]["client"]
-        )
+        # event = XRWebhookEvent(
+        #     # source=payload_dict["xr.rt"][0]["source"],
+        #     type=payload_dict["type"],
+        #     args=payload_dict["args"]
+        #     # client=payload_dict["xr.rt"][0]["client"]
+        # )
+
+        # event = XRWebhookEvent(
+        #     **payload_dict
+        # )
 
         event_batch = XRWebhookEventBatch(
-            **{'xr.rt': [event]}
+            **payload_dict
         )
         
         # Convert to JSON and print beautified output
         event_batch_json = event_batch.model_dump_json(indent=4, by_alias=True, exclude_unset=True)
         print(event_batch_json)
+
         
-        return self.xr.events.post_event(event_batch)
+        # return self.xr.events.post_event(event_batch)
+        return self.xr.events.post_event_as_batch(event_batch)

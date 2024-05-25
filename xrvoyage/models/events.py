@@ -25,15 +25,15 @@ class XRWebhookEvent(pydantic.BaseModel):
 
 
 class XRWebhookEventBatch(pydantic.BaseModel):
-    xr_rt: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_rt: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.rt',
-        default=None
+        default_factory=lambda: []
     )
-    xr_data: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_data: List[XRWebhookEvent]= pydantic.Field(
         alias='xr.data',
-        default=None
+        default_factory=lambda: []
     )
-    xr_nrt: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_nrt: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.nrt',
-        default=None
+        default_factory=lambda: []
     )
