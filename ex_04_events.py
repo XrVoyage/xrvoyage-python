@@ -29,34 +29,45 @@ class XREventsTester:
     #     return self.xr.events.post_event(event_batch)
 
 
-    def send_event_xr_data(self):
+    def send_event_xr_data_llm_source(self):
         payload_str = '''
-            {
-                "source": "690D3FAD36C34FD3BB4A9AFC0F6EB659",
-                "type": "xr.data.llm-choice-destination",
-                "args": {
-                    "choice": "choiceValue"
-                },
-                "client": {
-                    "session": "j2nmiYcYeD65MdAhJkWHiBoCFxUQHXj286nA",
-                    "timestamp_utc": "1716644903763"
+        {
+            "xr.data": [
+                {
+                    "project_guid": "A895570833F0429A98940C079555AE51",
+                    "type": "xr.data.llm-choice-source",
+                    "args": {
+                        "message": "hi there, Sam"
+                    }
                 }
-            }
+            ]
+        }
         '''
-        
         payload_dict = json.loads(payload_str)
-        
-        event = XRWebhookEvent(
-            source=payload_dict["source"],
-            type=payload_dict["type"],
-            args=payload_dict["args"],
-            client=payload_dict["client"]
-        )
-
-        event_json = event.model_dump_json(indent=4, by_alias=True, exclude_unset=True)
+        event_batch = XRWebhookEventBatch(**payload_dict)
+        event_json = event_batch.model_dump_json(indent=4, by_alias=True, exclude_unset=True)
         print("EVENT XR DATA EGRESS:", event_json)
-
-        return self.xr.events.post_event(event)
+        return self.xr.events.post_event_as_batch(event_batch)
+    
+    def send_event_xr_data_llm_destination(self):
+        payload_str = '''
+        {
+            "xr.data": [
+                {
+                    "project_guid": "A895570833F0429A98940C079555AE51",
+                    "type": "xr.data.llm-choice-destination",
+                    "args": {
+                        "answer": "YES"
+                    }
+                }
+            ]
+        }
+        '''
+        payload_dict = json.loads(payload_str)
+        event_batch = XRWebhookEventBatch(**payload_dict)
+        event_json = event_batch.model_dump_json(indent=4, by_alias=True, exclude_unset=True)
+        print("EVENT XR DATA EGRESS:", event_json)
+        return self.xr.events.post_event_as_batch(event_batch)    
 
 
     def send_event_xr_rt_status_ship_crew(self):

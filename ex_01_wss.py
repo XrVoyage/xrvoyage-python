@@ -20,6 +20,8 @@ ship_guid = "C9EECCC7826249E386B45B78D8A14B19"
 
 @eventIngress([
     "xr.data.wh1", 
+    "xr.data.llm-choice-source", 
+    "xr.data.llm-choice-destination",         
     "xr.rt.status.ship.crew",
     "xr.rt.status.ship.geo"
     ])
@@ -42,7 +44,9 @@ async def main():
     # Call the function from ex_02_datahook.py to send the payload
     from ex_04_events import XREventsTester
     xrtester = XREventsTester(xr)
-    response = xrtester.send_event_xr_rt_status_ship_crew()
+    #response = xrtester.send_event_xr_rt_status_ship_crew()
+    response = xrtester.send_event_xr_data_llm_source()
+    response = xrtester.send_event_xr_data_llm_destination()
     print("XREVENTS SEND PAYLOAD", response)
 
     try:

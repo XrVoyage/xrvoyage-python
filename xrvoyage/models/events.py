@@ -22,6 +22,7 @@ class XRWebhookEvent(pydantic.BaseModel):
     # all events should have the ship_guid property, so that we know where to route them
     # this is optional to avoid breaking existing code.
     ship_guid: str | None = None
+    project_guid: str | None = None
 
 
 class XRWebhookEventBatch(pydantic.BaseModel):
