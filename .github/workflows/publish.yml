@@ -6,6 +6,7 @@ on:
       - main
       - 'issue/*'
   pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -60,7 +61,8 @@ jobs:
       run: pip install twine
 
     - name: Publish to PyPI
+      if: github.event.pull_request.merged == true || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/issue/')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: twine upload dist/*
+      run: twine upload --verbose dist/*
