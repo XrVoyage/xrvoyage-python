@@ -15,8 +15,8 @@ class DataHookTester:
                 "key3": "value3",
                 "key4": "value4"
             },
-            project_guid="C7138CAE3EF14008ADEC225F368F376A",
+            project_guid="A3689E3BAA2B40389099DC91BCE30DF8",
         )
         
-        response = self.xr.data.post_webhook(self.webhook_id, payload)
-        return response
+        return self.xr.data.post_webhook(self.webhook_id, payload)
+        

@@ -10,7 +10,7 @@ from ..auth import TokenStrategy
 from ..config.config import get_app_config
 from ..exceptions import WssConnectionError
 
-EventCallback = Callable[[XRWebhookEventBatch], None]
+EventCallback = Callable[[dict], None]
 event_handlers: Dict[str, EventCallback] = {}
 
 def eventIngress(event_type: str):
@@ -35,6 +35,7 @@ class WssHandler:
         self._token_strategy = token_strategy
         self._task = None
         self._websocket = None
+        self._connected_event = asyncio.Event()
 
     async def _listen_async(self, guid: str) -> None:
         settings = get_app_config()
@@ -45,25 +46,28 @@ class WssHandler:
         try:
             async with websockets.connect(ws_url) as websocket:
                 self._websocket = websocket
+                self._connected_event.set()  # Set the event after connection is established
                 logger.info(f'Listening for websocket updates for ship: {guid}')
                 while True:
                     result = await websocket.recv()
                     logger.info(f'Received event: {result}')
                     event_dict = json.loads(result)
-                    event_type = event_dict.get("type")
-                    if event_type in event_handlers:
-                        parsed_event = XRWebhookEventBatch(**event_dict)
-                        logger.debug(f'Triggering event handler for event type: {event_type}')
-                        event_handlers[event_type](parsed_event)
-                    else:
-                        logger.warning(f"No handler registered for event type: {event_type}")
+                    # Extract event data and type correctly
+                    event_data_list = event_dict.get("xr.data", [])
+                    for event_data in event_data_list:
+                        event_type = event_data.get("type")
+                        if event_type in event_handlers:
+                            logger.debug(f'Triggering event handler for event type: {event_type}')
+                            event_handlers[event_type](event_data)
+                        else:
+                            logger.warning(f"No handler registered for event type: {event_type}")
         except websockets.exceptions.ConnectionClosedOK:
             logger.info('Websocket connection closed normally.')
         except Exception as e:
             logger.error(f'Error in websocket connection: {e}')
             raise WssConnectionError(str(e))
 
-    def connect(self, ship_guid: str) -> None:
+    async def connect(self, ship_guid: str) -> None:
         """
         Connects to the Websockets server and listens for ship events.
 
@@ -78,7 +82,9 @@ class WssHandler:
         """
         logger.debug(f'Attempting to connect to websocket for ship: {ship_guid}')
         if self._task is None or self._task.done():
+            self._connected_event.clear()  # Clear the event before starting the task
             self._task = asyncio.create_task(self._listen_async(ship_guid))
+            await self._connected_event.wait()  # Wait for the connection to be established
 
     async def destroy(self) -> None:
         """

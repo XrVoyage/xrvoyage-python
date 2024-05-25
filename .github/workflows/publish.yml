@@ -3,7 +3,6 @@ name: Publish Python Package
 on:
   push:
     branches:
-      - main
       - 'issue/*'
   pull_request:
     types: [closed]
@@ -15,54 +14,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0  # Ensure full history is available for git describe
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Ensure full history is available for git describe
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11.0'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11.0'
 
-    - name: Install Poetry
-      run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
 
-    - name: Install dependencies
-      run: poetry install
+      - name: Install dependencies
+        run: poetry install
 
-    - name: Extract version using git_semver.py
-      id: get_version
-      run: |
-        python3 git_semver.py > semver.txt
-        SEMVER=$(cat semver.txt)
-        echo "SEMVER=$SEMVER" >> $GITHUB_ENV
-        echo "Extracted version: $SEMVER"
+      - name: Extract version using git_semver.py
+        id: get_version
+        run: |
+          python3 git_semver.py > semver.txt
+          SEMVER=$(cat semver.txt)
+          echo "SEMVER=$SEMVER" >> $GITHUB_ENV
+          echo "Extracted version: $SEMVER"
 
-    - name: Set the version in pyproject.toml
-      run: poetry version ${{ env.SEMVER }}
+      - name: Set the version in pyproject.toml
+        run: poetry version ${{ env.SEMVER }}
 
-    - name: Generate _version.py
-      run: |
-        echo "version = '${{ env.SEMVER }}'" > xrvoyage/_version.py
+      - name: Generate _version.py
+        run: |
+          echo "version = '${{ env.SEMVER }}'" > xrvoyage/_version.py
 
-    - name: Build package
-      run: poetry build
+      - name: Build package
+        run: poetry build
 
-    - name: Install unzip utility
-      run: sudo apt-get install -y unzip
+      - name: Install unzip utility
+        run: sudo apt-get install -y unzip
 
-    - name: Verify _version.py in wheel
-      run: |
-        mkdir extracted_whl
-        unzip dist/*.whl -d extracted_whl
-        cat extracted_whl/xrvoyage/_version.py
+      - name: Verify _version.py in wheel
+        run: |
+          mkdir extracted_whl
+          unzip dist/*.whl -d extracted_whl
+          cat extracted_whl/xrvoyage/_version.py
 
-    - name: Install twine
-      run: pip install twine
+      - name: Install twine
+        run: pip install twine
 
-    - name: Publish to PyPI
-      if: github.event.pull_request.merged == true || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/issue/')
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: twine upload --verbose dist/*
+      - name: Publish to PyPI
+        if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || startsWith(github.ref, 'refs/heads/issue/')
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: twine upload --verbose dist/*
