@@ -3,11 +3,13 @@ import asyncio
 import json
 import xrvoyage
 from xrvoyage import XrApiClient
-from xrvoyage.handlers.wss import WssHandler, eventIngress
-from xrvoyage.models.events import XRWebhookEventBatch
+from xrvoyage.handlers.wss import eventIngress
 from dotenv import load_dotenv
 
 load_dotenv()
+
+print("XRVOYAGE_ACCESS_KEY_ID", os.environ.get('XRVOYAGE_ACCESS_KEY_ID'))
+print("XRVOYAGE_SECRET_ACCESS_KEY", os.environ.get('XRVOYAGE_SECRET_ACCESS_KEY'))
 
 # Print XrVoyage version
 print("XrVoyage Version: ", xrvoyage.__version__)
@@ -16,10 +18,14 @@ print("XrVoyage Version: ", xrvoyage.__version__)
 xr = XrApiClient()
 ship_guid = "C9EECCC7826249E386B45B78D8A14B19"
 
-@eventIngress("xr.data.wh1")
-def handle_some_data(event: XRWebhookEventBatch):
-    print("Handling event of type 'xr.data.wh1'")
-    # Print the full JSON event prettified with indent 4
+@eventIngress([
+    "xr.data.wh1", 
+    "xr.rt.status.ship.crew",
+    "xr.rt.status.ship.geo"
+    ])
+def handle_events(event: dict):
+    event_type = event.get("type")
+    print(f"Handling event of type '{event_type}'")
     event_json = json.dumps(event, indent=4)
     print("Event data:", event_json)
 
@@ -28,10 +34,16 @@ async def main():
     await xr.wss.connect(ship_guid)  # Await the async connect method
     
     # Call the function from ex_02_datahook.py to send the payload
-    from ex_02_datahook import DataHookTester
-    tester = DataHookTester(xr)
-    response = tester.send_test_payload()
-    print("DATA SEND PAYLOAD", response)
+    # from ex_02_datahook import DataHookTester
+    # tester = DataHookTester(xr)
+    # response = tester.send_test_payload()
+    # print("DATA SEND PAYLOAD", response)
+
+    # Call the function from ex_02_datahook.py to send the payload
+    from ex_04_events import XREventsTester
+    xrtester = XREventsTester(xr)
+    response = xrtester.send_event_xr_rt_status_ship_crew()
+    print("XREVENTS SEND PAYLOAD", response)
 
     try:
         # Run the event loop for a while to demonstrate

@@ -1,7 +1,7 @@
 import requests
 
 from ..auth import TokenStrategy
-from ..models.events import XRWebhookEventBatch
+from ..models.events import XRWebhookEventBatch, XRWebhookEvent
 from ..config.config import get_app_config
 from ..exceptions import ApiError
 
@@ -16,7 +16,7 @@ class XREventsHandler:
         """
         self._token_strategy = token_strategy
 
-    def post_event(self, event_batch: XRWebhookEventBatch) -> None:
+    def post_event_as_batch(self, event_batch: XRWebhookEventBatch) -> None:
         """
         Send an event to the API
 
@@ -34,3 +34,24 @@ class XREventsHandler:
         )
         if not response.ok:
             raise ApiError(status_code=response.status_code, body=response.text)
+        return response.json()
+    
+    def post_event(self, event: XRWebhookEvent) -> None:
+        """
+        Send an event to the API
+
+        Args:
+            event_batch (XRWebhookEventBatch): the event batch to be sent to the API
+        """
+        settings = get_app_config()
+        api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
+        url = f'{api_base_url}/webhooks/xrweb'
+        token = self._token_strategy.get_token()
+        response = requests.post(
+            url,
+            headers={'Authorization': f'Bearer {token}'},
+            json=event.model_dump()
+        )
+        if not response.ok:
+            raise ApiError(status_code=response.status_code, body=response.text)
+        return response.json()
