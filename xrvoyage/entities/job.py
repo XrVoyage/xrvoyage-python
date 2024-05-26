@@ -1,4 +1,4 @@
-from ..auth import TokenStrategy
+from ..handlers.auth import TokenStrategy
 
 
 class JobHandler:

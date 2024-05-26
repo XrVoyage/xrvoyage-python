@@ -37,7 +37,7 @@ class XREventsTester:
                     "project_guid": "A895570833F0429A98940C079555AE51",
                     "type": "xr.data.llm-choice-source",
                     "args": {
-                        "message": "hi there, Sam"
+                        "message": "hi there, Rogeno"
                     }
                 }
             ]

@@ -5,8 +5,8 @@ import jwt
 import requests
 import logzero
 
-from xrvoyage.config.config import get_app_config
-from xrvoyage.exceptions import InvalidCredentialsError
+from xrvoyage.common.config import get_app_config
+from xrvoyage.common.exceptions import InvalidCredentialsError
 
 
 def _is_token_expired(token: str) -> bool:
@@ -24,7 +24,7 @@ def _is_token_expired(token: str) -> bool:
 
 class TokenStrategy(ABC):
     @abstractmethod
-    def get_token(self):
+    def   get_token(self):
         raise NotImplementedError
 
 

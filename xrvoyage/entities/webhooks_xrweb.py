@@ -1,12 +1,12 @@
 import requests
 
-from ..auth import TokenStrategy
+from ..handlers.auth import TokenStrategy
 from ..models.events import XRWebhookEventBatch, XRWebhookEvent
-from ..config.config import get_app_config
-from ..exceptions import ApiError
+from ..common.config import get_app_config
+from ..common.exceptions import ApiError
 
 
-class XREventsHandler:
+class Webhooks_XRWebHandler:
     def __init__(self, token_strategy: TokenStrategy):
         """
         Constructor for the XR Events Handler

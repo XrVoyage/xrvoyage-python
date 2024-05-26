@@ -8,15 +8,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-print("XRVOYAGE_ACCESS_KEY_ID", os.environ.get('XRVOYAGE_ACCESS_KEY_ID'))
-print("XRVOYAGE_SECRET_ACCESS_KEY", os.environ.get('XRVOYAGE_SECRET_ACCESS_KEY'))
+# print("XRVOYAGE_ACCESS_KEY_ID", os.environ.get('XRVOYAGE_ACCESS_KEY_ID'))
+# print("XRVOYAGE_SECRET_ACCESS_KEY", os.environ.get('XRVOYAGE_SECRET_ACCESS_KEY'))
 
 # Print XrVoyage version
 print("XrVoyage Version: ", xrvoyage.__version__)
 
 # Using credentials to obtain the token so it can be used for API calls
 xr = XrApiClient()
-ship_guid = "C9EECCC7826249E386B45B78D8A14B19"
+ship_guid = "878EBE0DA02A4B68991E96D034853F9E"
 
 @eventIngress([
     "xr.data.wh1", 
@@ -44,9 +44,9 @@ async def main():
     # Call the function from ex_02_datahook.py to send the payload
     from ex_04_events import XREventsTester
     xrtester = XREventsTester(xr)
-    #response = xrtester.send_event_xr_rt_status_ship_crew()
+    # response = xrtester.send_event_xr_rt_status_ship_crew()
     response = xrtester.send_event_xr_data_llm_source()
-    response = xrtester.send_event_xr_data_llm_destination()
+    # response = xrtester.send_event_xr_data_llm_destination()
     print("XREVENTS SEND PAYLOAD", response)
 
     try:
