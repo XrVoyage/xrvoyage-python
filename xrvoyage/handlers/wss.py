@@ -1,4 +1,4 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, List, Union
 import asyncio
 import json
 import websockets
@@ -6,20 +6,24 @@ import logzero
 from logzero import logger
 
 from ..models.events import XRWebhookEventBatch
-from ..auth import TokenStrategy
-from ..config.config import get_app_config
-from ..exceptions import WssConnectionError
+from .auth import TokenStrategy
+from ..common.config import get_app_config
+from ..common.exceptions import WssConnectionError
 
 EventCallback = Callable[[dict], None]
 event_handlers: Dict[str, EventCallback] = {}
 
-def eventIngress(event_type: str):
+def eventIngress(event_types: Union[str, List[str]]):
     """
-    Decorator to register a callback for a specific event type.
+    Decorator to register a callback for one or more specific event types.
     """
-    logger.debug(f'Registering event handler for event type: {event_type}')
+    if isinstance(event_types, str):
+        event_types = [event_types]
+
     def decorator(func: EventCallback):
-        event_handlers[event_type] = func
+        for event_type in event_types:
+            logger.debug(f'Registering event handler for event type: {event_type}')
+            event_handlers[event_type] = func
         return func
     return decorator
 
@@ -52,20 +56,41 @@ class WssHandler:
                     result = await websocket.recv()
                     logger.info(f'Received event: {result}')
                     event_dict = json.loads(result)
-                    # Extract event data and type correctly
-                    event_data_list = event_dict.get("xr.data", [])
-                    for event_data in event_data_list:
-                        event_type = event_data.get("type")
-                        if event_type in event_handlers:
-                            logger.debug(f'Triggering event handler for event type: {event_type}')
-                            event_handlers[event_type](event_data)
-                        else:
-                            logger.warning(f"No handler registered for event type: {event_type}")
+                    self._handle_event(event_dict)
         except websockets.exceptions.ConnectionClosedOK:
             logger.info('Websocket connection closed normally.')
         except Exception as e:
             logger.error(f'Error in websocket connection: {e}')
             raise WssConnectionError(str(e))
+
+    def _handle_event(self, event_dict: dict) -> None:
+        """
+        Handle the received event, determining if it's a batch or single event.
+
+        Args:
+            event_dict (dict): The event dictionary received from the websocket.
+        """
+        for key, value in event_dict.items():
+            if key.startswith("xr."):
+                if isinstance(value, list):
+                    for event_data in value:
+                        self._trigger_event_handler(event_data)
+                else:
+                    self._trigger_event_handler(value)
+
+    def _trigger_event_handler(self, event_data: dict) -> None:
+        """
+        Trigger the registered event handler for the event type.
+
+        Args:
+            event_data (dict): The event data containing the event type and other details.
+        """
+        event_type = event_data.get("type")
+        if event_type in event_handlers:
+            logger.debug(f'Triggering event handler for event type: {event_type}')
+            event_handlers[event_type](event_data)
+        else:
+            logger.warning(f"No handler registered for event type: {event_type}")
 
     async def connect(self, ship_guid: str) -> None:
         """

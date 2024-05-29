@@ -1,12 +1,10 @@
-import requests
-
-from ..auth import TokenStrategy
+from ..handlers.auth import TokenStrategy
 from ..models.data import DataWebhookEvent
-from ..config.config import get_app_config
-from ..exceptions import ApiError
+from ..common.config import get_app_config
+from ..common.exceptions import ApiError
+from ..handlers.http import HttpHandler
 
-
-class DataHandler:
+class DataWebhookHandler:
     def __init__(self, token_strategy: TokenStrategy):
         """
         Data Handler Constructor
@@ -14,7 +12,7 @@ class DataHandler:
         Args:
             token_strategy (TokenStrategy): The strategy to get the auth token
         """
-        self._token_strategy = token_strategy
+        self._http_handler = HttpHandler(token_strategy)
 
     def post_webhook(self, webhook_id: str, event: DataWebhookEvent) -> None:
         """
@@ -22,17 +20,10 @@ class DataHandler:
 
         Args:
             webhook_id (str): The webhook id.
-            event (DataWebhookEvent): the event to be sent to the webhook.
+            event (BaseModel): the event to be sent to the webhook.
         """
         settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/data/webhook/{webhook_id}'
-        token = self._token_strategy.get_token()
-        response = requests.post(
-            url,
-            headers={'Authorization': f'Bearer {token}'},
-            json=event.model_dump()
-        )
-        if not response.ok:
-            raise ApiError(status_code=response.status_code, body=response.text)
-        return response.json()
+        response = self._http_handler.post(url, json=event)
+        return response

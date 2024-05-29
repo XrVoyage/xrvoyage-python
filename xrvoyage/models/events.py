@@ -10,7 +10,7 @@ class ClientInfo(pydantic.BaseModel):
 class XRWebhookEvent(pydantic.BaseModel):
     source: str | None = None
     type: str
-    args: Dict[str, Any]
+    args: Dict[str, Any] | None = None
     sender_sub: str | None = None
     sender_username: str | None = None
     guid: str | None = None  # <- Some events don't have a guid since they are not saved in Mongo
@@ -22,18 +22,19 @@ class XRWebhookEvent(pydantic.BaseModel):
     # all events should have the ship_guid property, so that we know where to route them
     # this is optional to avoid breaking existing code.
     ship_guid: str | None = None
+    project_guid: str | None = None
 
 
 class XRWebhookEventBatch(pydantic.BaseModel):
-    xr_rt: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_rt: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.rt',
-        default=None
+        default_factory=lambda: []
     )
-    xr_data: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_data: List[XRWebhookEvent]= pydantic.Field(
         alias='xr.data',
-        default=None
+        default_factory=lambda: []
     )
-    xr_nrt: List[XRWebhookEvent] | None = pydantic.Field(
+    xr_nrt: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.nrt',
-        default=None
+        default_factory=lambda: []
     )
