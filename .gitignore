@@ -1,5 +1,6 @@
 xr-oai/
 xroai/
+structure_storage/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
