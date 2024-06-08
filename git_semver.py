@@ -13,6 +13,10 @@ def get_git_semver():
         first = describe_output.lstrip("v")
         semver = f"{first}.0"
 
+    # Ensure the third number is set to zero for tagged versions
+    if ".0" not in semver:
+        semver += ".0"
+
     print(semver)
 
 if __name__ == "__main__":
