@@ -14,7 +14,7 @@ class Webhooks_XRWebHandler:
         """
         self._http_handler = HttpHandler(token_strategy)
 
-    def post_event_as_batch(self, event_batch: XRWebhookEventBatch) -> None:
+    def post_event_as_batch(self, event_batch: XRWebhookEventBatch) -> dict:
         """
         Send an event to the API
 
@@ -25,9 +25,9 @@ class Webhooks_XRWebHandler:
         api_base_url = settings.XRVOYAGE_API_BASE_URL
         url = f'{api_base_url}/webhooks/xrweb'
         response = self._http_handler.post(url, json=event_batch.model_dump(by_alias=True))
-        return response.json()
+        return response
 
-    def post_event(self, event: XRWebhookEvent) -> None:
+    def post_event(self, event: XRWebhookEvent) -> dict:
         """
         Send an event to the API
 
@@ -38,4 +38,4 @@ class Webhooks_XRWebHandler:
         api_base_url = settings.XRVOYAGE_API_BASE_URL
         url = f'{api_base_url}/webhooks/xrweb'
         response = self._http_handler.post(url, json=event.model_dump(by_alias=True))
-        return response.json()
+        return response

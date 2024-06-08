@@ -8,10 +8,10 @@ import logging
 import json
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Create Comedian Agent Structure
+# Create Quiz Agent Structure
 system_prompt = """---TASK
 1. You are most outstanding mystery game designer. 
 2. YOU WILL NOT SKIP ANY OF THE 18 POINTS FROM THIS LIST
@@ -68,14 +68,19 @@ def create_prompt_instructions(theme):
     }
     return json.dumps(instructions)
 
-json_instructions = create_prompt_instructions("mickey mouse")
+def create_vr_quiz_agent(theme):
+    json_instructions = create_prompt_instructions(theme)
 
-vr_quiz_instruction = Instruction(instruction=json_instructions)
+    vr_quiz_instruction = Instruction(instruction=json_instructions)
 
-graph_comedian = GraphExecutor()
-graph_comedian.add_node(vr_quiz_game_system)
-graph_comedian.add_node(vr_quiz_instruction)
-graph_comedian.add_edge(vr_quiz_game_system, vr_quiz_instruction)
+    graph_vr_quiz = GraphExecutor()
+    graph_vr_quiz.add_node(vr_quiz_game_system)
+    graph_vr_quiz.add_node(vr_quiz_instruction)
+    graph_vr_quiz.add_edge(vr_quiz_game_system, vr_quiz_instruction)
+
+    executable = InstructionMapEngine()
+    vr_quiz_lionagi = BaseAgent(structure=graph_vr_quiz, executable=executable, output_parser=output_parser)
+    return vr_quiz_lionagi
 
 def output_parser(agent):
     output = []
@@ -93,15 +98,17 @@ def output_parser(agent):
                 logger.debug(f"Parsed JSON: \n{json.dumps(parsed_json, indent=4)}")
     return output
 
-executable = InstructionMapEngine()
-comedian = BaseAgent(structure=graph_comedian, executable=executable, output_parser=output_parser)
+# Test function for running standalone execution
+if __name__ == "__main__":
+    theme = "mickey mouse"
+    vr_quiz_lionagi = create_vr_quiz_agent(theme)
 
-async def main():
-    result = await comedian.execute()
-    return result
+    async def main():
+        result = await vr_quiz_lionagi.execute()
+        return result
 
-result = asyncio.run(main())
+    result = asyncio.run(main())
 
-# Print the parsed JSON content
-for json_content in result:
-    print(json.dumps(json_content, indent=4))
+    # Print the parsed JSON content
+    for json_content in result:
+        print(json.dumps(json_content, indent=4))

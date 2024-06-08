@@ -17,10 +17,10 @@ class XrApiClient:
         token_strategy = get_token_strategy()
         self.data_webhook = DataWebhookHandler(token_strategy)
         # self.job = JobHandler(token_strategy)
-        self.wss = WssHandler(token_strategy)
         self.webhooks_xrweb = Webhooks_XRWebHandler(token_strategy)
         self.project_guid = "A895570833F0429A98940C079555AE51"
         self.decorators = DecoratorsHandlers(self.webhooks_xrweb, self.project_guid)
+        self.wss = WssHandler(token_strategy, self.decorators)
         self._shutdown = False
 
     async def connect(self):

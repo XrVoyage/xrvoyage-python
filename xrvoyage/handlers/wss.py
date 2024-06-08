@@ -9,37 +9,23 @@ from ..models.events import XRWebhookEventBatch
 from .auth import TokenStrategy
 from ..common.config import get_app_config
 from ..common.exceptions import WssConnectionError
-
-# EventCallback = Callable[[dict], None]
-# event_handlers: Dict[str, EventCallback] = {}
-
-# def eventIngress(event_types: Union[str, List[str]]):
-#     """
-#     Decorator to register a callback for one or more specific event types.
-#     """
-#     if isinstance(event_types, str):
-#         event_types = [event_types]
-
-#     def decorator(func: EventCallback):
-#         for event_type in event_types:
-#             logger.debug(f'Registering eventIngress handler for event type: {event_type}')
-#             event_handlers[event_type] = func
-#         return func
-#     return decorator
+from .decorators import DecoratorsHandlers
 
 class WssHandler:
-    def __init__(self, token_strategy: TokenStrategy) -> None:
+    def __init__(self, token_strategy: TokenStrategy, decorators: DecoratorsHandlers) -> None:
         """
         Websockets Handler Constructor
 
         Args:
             token_strategy (TokenStrategy): The strategy to get the API token.
+            decorators (DecoratorsHandlers): Instance of DecoratorsHandlers to access event handlers.
         """
         logger.debug('Initializing WssHandler')
         self._token_strategy = token_strategy
         self._task = None
         self._websocket = None
         self._connected_event = asyncio.Event()
+        self._decorators = decorators
 
     async def _listen_async(self, guid: str) -> None:
         settings = get_app_config()
@@ -85,11 +71,21 @@ class WssHandler:
             event_data (dict): The event data containing the event type and other details.
         """
         event_type = event_data.get("type")
-        if event_type in event_handlers:
-            logger.debug(f'Triggering event handler for event type: {event_type}')
-            event_handlers[event_type](event_data)
+        if event_type in self._decorators.event_handlers:
+            try:
+                logger.info(f'eventIngress sent to registered handler: {event_type}')
+                handler = self._decorators.event_handlers[event_type]
+                logger.debug(f"Handler for {event_type}: {handler}")
+                if asyncio.iscoroutinefunction(handler):
+                    logger.debug(f"{event_type} handler is a coroutine, scheduling with asyncio.ensure_future")
+                    asyncio.ensure_future(handler(event_data))
+                else:
+                    logger.debug(f"{event_type} handler is not a coroutine, calling directly")
+                    handler(event_data)
+            except Exception as e:
+                logger.error(f"Error handling event {event_type}: {e}")
         else:
-            logger.warning(f"No handler registered for event type: {event_type}")
+            logger.debug(f"eventIngress skipping not handled: {event_type}")
 
     async def connect(self, ship_guid: str) -> None:
         """
@@ -120,4 +116,4 @@ class WssHandler:
             logger.info('Websocket connection closed.')
 
 # Ensure eventIngress is included in the module's export
-__all__ = ['WssHandler', 'eventIngress']
+__all__ = ['WssHandler', 'DecoratorsHandlers']
