@@ -3,7 +3,7 @@ import asyncio
 import json
 import xrvoyage
 from xrvoyage import XrApiClient
-from xrvoyage.handlers.wss import eventIngress
+from xrvoyage.handlers.decorators import eventIngress
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -50,7 +50,7 @@ async def main():
     # response = xrtester.send_event_xr_rt_status_ship_crew()
     # response = xrtester.send_event_xr_data_llm_source()
     # response = xrtester.send_event_xr_data_llm_destination()
-    # response = xrtester.send_event_xr_data_vr_quiz_data()
+    response = xrtester.send_event_xr_data_vr_quiz_data()
     # print("XREVENTS SEND PAYLOAD", response)
 
     try:

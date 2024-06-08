@@ -10,22 +10,22 @@ from .auth import TokenStrategy
 from ..common.config import get_app_config
 from ..common.exceptions import WssConnectionError
 
-EventCallback = Callable[[dict], None]
-event_handlers: Dict[str, EventCallback] = {}
+# EventCallback = Callable[[dict], None]
+# event_handlers: Dict[str, EventCallback] = {}
 
-def eventIngress(event_types: Union[str, List[str]]):
-    """
-    Decorator to register a callback for one or more specific event types.
-    """
-    if isinstance(event_types, str):
-        event_types = [event_types]
+# def eventIngress(event_types: Union[str, List[str]]):
+#     """
+#     Decorator to register a callback for one or more specific event types.
+#     """
+#     if isinstance(event_types, str):
+#         event_types = [event_types]
 
-    def decorator(func: EventCallback):
-        for event_type in event_types:
-            logger.debug(f'Registering event handler for event type: {event_type}')
-            event_handlers[event_type] = func
-        return func
-    return decorator
+#     def decorator(func: EventCallback):
+#         for event_type in event_types:
+#             logger.debug(f'Registering eventIngress handler for event type: {event_type}')
+#             event_handlers[event_type] = func
+#         return func
+#     return decorator
 
 class WssHandler:
     def __init__(self, token_strategy: TokenStrategy) -> None:
@@ -46,7 +46,6 @@ class WssHandler:
         token = self._token_strategy.get_token()
         ws_url = f"{settings.XRVOYAGE_WEBSOCKETS_BASE_URL}/v2/ship/{guid}/?token={token}"
 
-        logger.info(f'Connecting to websockets server: {ws_url}')
         try:
             async with websockets.connect(ws_url) as websocket:
                 self._websocket = websocket
