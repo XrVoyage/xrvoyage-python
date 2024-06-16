@@ -50,8 +50,8 @@ system_prompt = """---TASK
 vr_quiz_game_system = System(system=system_prompt)
 
 def create_prompt_instructions(theme):
-    scenes = 3
-    choices = 4
+    scenes = 5
+    choices = 9
     instructions = {
         "objective": f"Generate a game quiz definition dataset for the theme '{theme}'",
         "variables": ["question", "story", "choices", "correct_answer"],

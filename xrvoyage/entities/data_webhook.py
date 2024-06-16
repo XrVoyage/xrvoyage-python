@@ -20,10 +20,10 @@ class DataWebhookHandler:
 
         Args:
             webhook_id (str): The webhook id.
-            event (BaseModel): the event to be sent to the webhook.
+            event (DataWebhookEvent): the event to be sent to the webhook.
         """
         settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/data/webhook/{webhook_id}'
-        response = self._http_handler.post(url, json=event)
+        response = self._http_handler.post(url, json=event.dict())
         return response
