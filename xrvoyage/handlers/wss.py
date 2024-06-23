@@ -25,7 +25,7 @@ class WssHandler:
         self._task = None
         self._websocket = None
         self._connected_event = asyncio.Event()
-        self._decorators = decorators
+        self._decorators = decorators      
 
     async def _listen_async(self, guid: str) -> None:
         settings = get_app_config()

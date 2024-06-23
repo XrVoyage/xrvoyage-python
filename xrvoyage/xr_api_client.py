@@ -33,6 +33,12 @@ class XrApiClient:
 
         self._shutdown = False
 
+        self.total = 0 # persistence test
+
+    def add_five(self): # persistence test
+        self.total += 5
+        return f"Current Total: {self.total}"          
+
     async def connect(self):
         self.wss = WssHandler(self.token_strategy, self.decorators)
         loop = asyncio.get_event_loop()

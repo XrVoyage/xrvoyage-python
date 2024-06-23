@@ -3,86 +3,176 @@ import json
 from falkordb import FalkorDB
 import logzero
 from logzero import logger
+import hashlib
+from datetime import datetime
 
 class FalkorDBIngestor:
     def __init__(self, plugin_data):
-        self.plugin_data = json.loads(plugin_data)
-        self.plugin_name = self.plugin_data["name"]
-        self.plugin_guid = self.plugin_data["guid"]
-        self.created_utc = self.plugin_data["created_utc"]
-        self.updated_utc = self.plugin_data["updated_utc"]
-        self.classes = self.plugin_data["data"]["classes"]
-        self.file_content = base64.b64decode(self.plugin_data["data"]["object"]["file"]).decode('utf-8')
-
-        # Initialize FalkorDB client with hardcoded settings
         self.db = FalkorDB(host='localhost', port=6379, username='', password='')
         self.graph = self.db.select_graph('MyGraph')
         logzero.loglevel(logzero.DEBUG)
 
-    def create_plugin_node(self):
-        query = f"CREATE (:XrVoyagePlugin {{name: '{self.plugin_name}', guid: '{self.plugin_guid}', created_utc: '{self.created_utc}', updated_utc: '{self.updated_utc}'}});"
-        logger.debug(f"Executing query: {query}")
+        self.clear_database()
+        self.plugin_data = json.loads(plugin_data)
+        self.file_content = self.decode_file_content()
+        self.file_checksum = self.calculate_checksum(self.file_content)
+        self.xrvoyageplugin_id = self.create_xrvoyageplugin_node()
+        self.version_id = self.create_version_node()
+        self.link_nodes()
+
+    def calculate_checksum(self, content):
+        return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+    def clear_database(self):
+        query = "MATCH (n) DETACH DELETE n"
+        logger.debug("Executing query: %s" % query)
         self.graph.query(query)
+        logger.debug("Database cleared.")
+
+    def decode_file_content(self):
+        encoded_content = self.plugin_data['data']['object']['file']
+        return base64.b64decode(encoded_content).decode('utf-8')
+
+    def create_xrvoyageplugin_node(self):
+        attributes = ', '.join(["%s: $%s" % (k, k) for k in self.plugin_data.keys() if k != 'data'])
+        query = "MERGE (p:XrVoyagePlugin {name: $name}) SET p += {%s} RETURN id(p) as id" % attributes
+        logger.debug("Executing query: %s" % query)
+        params = {k: v for k, v in self.plugin_data.items() if k != 'data'}
+        result = self.graph.query(query, params=params)
+        return result.result_set[0][0]
+
+    def create_version_node(self):
+        query = "CREATE (v:Version {name: $name, updated_utc: $updated_utc, file_checksum: $file_checksum}) RETURN id(v) as id"
+        logger.debug("Executing query: %s" % query)
+        params = {
+            'name': f"Version {self.plugin_data['updated_utc']}",
+            'updated_utc': self.plugin_data['updated_utc'],
+            'file_checksum': self.file_checksum
+        }
+        result = self.graph.query(query, params=params)
+        version_id = result.result_set[0][0]
+        self.link_nodes_helper(self.xrvoyageplugin_id, version_id, 'HAS_VERSION')
+        return version_id
 
     def create_class_node(self, class_name):
-        query = f"CREATE (:Class {{name: '{class_name}'}});"
-        logger.debug(f"Executing query: {query}")
-        self.graph.query(query)
+        query = "MERGE (c:Class {name: $name}) RETURN id(c) as id"
+        logger.debug("Executing query: %s" % query)
+        result = self.graph.query(query, params={'name': class_name})
+        return result.result_set[0][0]
 
-    def create_class_update_node(self, class_name, updated_utc):
-        query = f"CREATE (:ClassUpdate {{class_name: '{class_name}', updated_utc: '{updated_utc}'}});"
-        logger.debug(f"Executing query: {query}")
-        self.graph.query(query)
+    def create_class_update_node(self, class_name):
+        query = """
+        CREATE (cu:ClassUpdate {
+            class_name: $class_name,
+            updated_utc: $updated_utc,
+            payload: $payload
+        }) RETURN id(cu) as id
+        """
+        params = {
+            'class_name': class_name,
+            'updated_utc': self.plugin_data['updated_utc'],
+            'payload': json.dumps(self.plugin_data)
+        }
+        logger.debug("Executing query: %s" % query)
+        result = self.graph.query(query, params=params)
+        return result.result_set[0][0]
 
-    def create_function_node(self, function_data):
-        function_name = function_data["name"]
-        status = function_data["status"]
-        line_start = function_data["line_start"]
-        line_end = function_data["line_end"]
-        scope = function_data["scope"]
-        async_flag = function_data["async"]
+    def create_function_node(self, function_name):
+        query = "MERGE (f:Function {name: $name}) RETURN id(f) as id"
+        logger.debug("Executing query: %s" % query)
+        result = self.graph.query(query, params={'name': function_name})
+        return result.result_set[0][0]
+
+    def create_function_update_node(self, function_data):
+        fragment = self.extract_code_fragment(function_data['line_start'], function_data['line_end'])
+        checksum = self.calculate_checksum(fragment)
         
-        query = f"CREATE (f:Function {{name: '{function_name}', status: '{status}', line_start: {line_start}, line_end: {line_end}, scope: '{scope}', async: {str(async_flag).lower()}}});"
-        logger.debug(f"Executing query: {query}")
-        self.graph.query(query)
+        query = """
+        CREATE (fu:FunctionUpdate {
+            function_name: $function_name,
+            updated_utc: $updated_utc,
+            line_start: $line_start,
+            line_end: $line_end,
+            code_fragment: $code_fragment,
+            checksum: $checksum,
+            status: $status,
+            scope: $scope,
+            is_async: $is_async
+        }) RETURN id(fu) as id
+        """
         
-        # Create and link decorators
-        for decorator in function_data.get('decorators', []):
-            self.create_and_link_decorator(decorator, function_name)
+        params = {
+            'function_name': function_data['name'],
+            'updated_utc': self.plugin_data['updated_utc'],
+            'line_start': function_data['line_start'],
+            'line_end': function_data['line_end'],
+            'code_fragment': fragment,
+            'checksum': checksum,
+            'status': function_data['status'],
+            'scope': function_data['scope'],
+            'is_async': function_data['async']
+        }
+        
+        logger.debug("Executing query: %s" % query)
+        result = self.graph.query(query, params=params)
+        return result.result_set[0][0]
 
-    def create_and_link_decorator(self, decorator, function_name):
-        decorator_name = decorator['name']
-        # Prepare the args array as a Cypher-compatible string
-        args = ', '.join(f"'{arg}'" for arg in decorator['args'])  # Ensures args are properly quoted
-        args_array = f"[{args}]"  # Creates the string representation of the array
+    def extract_code_fragment(self, start_line, end_line):
+        lines = self.file_content.split('\n')
+        fragment = '\n'.join(lines[start_line-1:end_line])
+        return fragment
 
-        query_decorator = f"CREATE (d:Decorator {{name: '{decorator_name}', args: {args_array}}});"
-        query_link = f"MATCH (f:Function {{name: '{function_name}'}}), (d:Decorator {{name: '{decorator_name}'}}) CREATE (f)-[:HAS_DECORATOR]->(d);"
-        logger.debug(f"Executing query for Decorator: {query_decorator}")
-        logger.debug(f"Executing link query: {query_link}")
-        self.graph.query(query_decorator)
-        self.graph.query(query_link)
+    def create_decorator_node(self, decorator):
+        query = "MERGE (d:Decorator {name: $name, args: $args}) RETURN id(d) as id"
+        params = {'name': decorator['name'], 'args': json.dumps(decorator['args'])}
+        logger.debug("Executing query: %s" % query)
+        result = self.graph.query(query, params=params)
+        return result.result_set[0][0]
 
-
-
-    def create_function_update_node(self, function_name, updated_utc):
-        query = f"CREATE (:FunctionUpdate {{function_name: '{function_name}', updated_utc: '{updated_utc}'}});"
-        logger.debug(f"Executing query: {query}")
-        self.graph.query(query)
+    def link_nodes_helper(self, from_id, to_id, relationship_type):
+        query = "MATCH (a),(b) WHERE id(a) = $from_id AND id(b) = $to_id CREATE (a)-[:%s]->(b)" % relationship_type
+        params = {'from_id': from_id, 'to_id': to_id}
+        logger.debug("Executing query: %s" % query)
+        self.graph.query(query, params=params)
 
     def link_nodes(self):
-        self.create_plugin_node()
-        
-        for class_data in self.classes:
-            class_name = class_data["class"]
-            self.create_class_node(class_name)
-            self.create_class_update_node(class_name, self.updated_utc)
-            
-            for function_data in class_data["functions"]:
-                self.create_function_node(function_data)
-                self.create_function_update_node(function_data["name"], self.updated_utc)
+        for class_data in self.plugin_data['data']['classes']:
+            class_id = self.create_class_node(class_data['class'])
+            self.link_nodes_helper(self.xrvoyageplugin_id, class_id, 'HAS_CLASS')
+            self.link_nodes_helper(self.version_id, class_id, 'HAS_CLASS')
 
+            class_update_id = self.create_class_update_node(class_data['class'])
+            self.link_nodes_helper(class_id, class_update_id, 'HAS_CLASS_UPDATE')
+            self.link_nodes_helper(self.version_id, class_update_id, 'HAS_VERSION')
 
+            for function_data in class_data['functions']:
+                function_id = self.create_function_node(function_data['name'])
+                self.link_nodes_helper(class_id, function_id, 'HAS_FUNCTION')
+                self.link_nodes_helper(class_update_id, function_id, 'HAS_FUNCTION')
+                self.link_nodes_helper(self.version_id, function_id, 'HAS_FUNCTION')
+
+                function_update_id = self.create_function_update_node(function_data)
+                self.link_nodes_helper(function_id, function_update_id, 'HAS_FUNCTION_UPDATE')
+                self.link_nodes_helper(self.version_id, function_update_id, 'HAS_VERSION')
+
+                for decorator in function_data.get('decorators', []):
+                    decorator_id = self.create_decorator_node(decorator)
+                    self.link_nodes_helper(function_id, decorator_id, 'HAS_DECORATOR')
+
+    def get_existing_version(self):
+        query = "MATCH (v:Version {file_checksum: $file_checksum}) RETURN id(v) as id"
+        params = {'file_checksum': self.file_checksum}
+        result = self.graph.query(query, params=params)
+        return result.result_set[0][0] if result.result_set else None
+
+    def ingest(self):
+        existing_version_id = self.get_existing_version()
+        if existing_version_id:
+            logger.info("File content hasn't changed. Skipping ingestion.")
+            return
+
+        self.link_nodes()
+        logger.info("Ingestion completed successfully.")
 
 def main():
     plugin_data = """
@@ -251,7 +341,7 @@ def main():
 }"""
 
     ingestor = FalkorDBIngestor(plugin_data)
-    ingestor.link_nodes()
+    ingestor.ingest()
 
 if __name__ == "__main__":
     main()

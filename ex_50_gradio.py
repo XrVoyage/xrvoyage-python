@@ -1,64 +1,51 @@
-import re
-import json
 import gradio as gr
+import json
+from logzero import logger, loglevel
+from xrvoyage import XrApiClient
+from xrvoyage.common.config import get_app_config
+from dotenv import load_dotenv
 
-# Function to detect functions in TypeScript code
-def detect_functions(ts_code):
-    function_pattern = re.compile(r'^\s*(public|private|protected)?\s*(async\s+)?(?:function\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*\(.*\)\s*{', re.MULTILINE)
-    matches = function_pattern.finditer(ts_code)
-    functions = []
-    
-    for match in matches:
-        func_name = match.group(3)
-        line_number = ts_code[:match.start()].count('\n') + 1
-        # Check if the function is commented
-        is_commented = ts_code[:match.start()].strip().startswith('//')
-        functions.append({'name': func_name, 'commented': is_commented, 'line': line_number})
-    
-    # Filtering out invalid detections like 'if', 'else', etc.
-    functions = [func for func in functions if func['name'] not in ['if', 'for', 'while', 'switch', 'case', 'else', 'return']]
-    
-    print("Detected functions:", functions)  # Logging detected functions
-    return functions
+# Load environment variables
+load_dotenv()
+settings = get_app_config()
 
-# Function to display the detected functions
-def display_functions(ts_code):
-    functions = detect_functions(ts_code)
-    function_names = [func['name'] for func in functions]
-    print("Function names:", function_names)  # Logging function names
-    return function_names, json.dumps(functions, indent=2)
+# Set log level based on environment variable
+loglevel(settings.LOGLEVEL.upper())
 
-# Function to execute the provided code (dummy implementation for TypeScript)
-def execute_code(code):
-    print("Executing code...")  # Logging code execution
-    return "Code execution is not supported for TypeScript in this demo."
+# Initialize XrApiClient
+xrclient = XrApiClient(settings.XRVOYAGE_CURRENT_SHIP)
 
-# Function to update the JSON representation of functions
-def update_functions_json(selected_functions):
-    functions = [{'name': func['name'], 'commented': (func['name'] not in selected_functions), 'line': func['line']} for func in all_functions]
-    print("Updated functions JSON:", functions)  # Logging updated functions JSON
-    return json.dumps(functions, indent=2)
+def call_add_five():
+    try:
+        result = xrclient.add_five()  # Assuming this method exists in xrclient and returns a result
+        logger.debug(f"Result from add_five: {result}")
+        return f"Result: {result}"
+    except Exception as e:
+        logger.error(f"Error in call_add_five: {str(e)}")
+        return f"Error: {str(e)}"
 
-# Function to handle the update of detected functions
-def update_detected_functions(ts_code):
-    global all_functions
-    function_names, functions_json_content = display_functions(ts_code)
-    all_functions = detect_functions(ts_code)
-    print("Updated all_functions:", all_functions)  # Logging all functions
-    return gr.CheckboxGroup(choices=function_names, value=[func['name'] for func in all_functions if not func['commented']], interactive=True), gr.Textbox(value=functions_json_content, interactive=True)
+def get_plugin_data(plugin_guid):
+    try:
+        plugin_data = xrclient.plugin_handler.get_plugin_by_guid(plugin_guid)
+        logger.debug(f"Fetched plugin data: {plugin_data}")
+        return json.dumps(plugin_data, indent=2)
+    except Exception as e:
+        logger.error(f"Error fetching plugin: {str(e)}")
+        return f"Error fetching plugin: {str(e)}"
 
-# Creating the Gradio interface
-with gr.Blocks() as demo:
-    ts_code = gr.Code(language='typescript', lines=20, label="TypeScript Code")
-    function_display = gr.CheckboxGroup(label="Detected Functions", choices=[], interactive=True)
-    functions_json = gr.Textbox(lines=10, label="Functions JSON", interactive=True)
-    execute_button = gr.Button("Execute")
-    output = gr.Textbox(lines=10, label="Output", interactive=True)
+# Gradio interface
+with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
+    with gr.Row():
+        with gr.Column():
+            plugin_guid = gr.Textbox(value=settings.XRVOYAGE_CURRENT_PLUGIN, lines=1, label="Plugin GUID", interactive=True)
+            get_plugin_button = gr.Button("GET PLUGIN")
+            add_button = gr.Button("Call Add Five")
+            add_output = gr.Label(value="Result will show here")
+        with gr.Column(scale=2):
+            plugin_output = gr.Code(language='typescript', lines=20, label="Plugin Data")
 
-    all_functions = []
+    add_button.click(fn=call_add_five, inputs=None, outputs=add_output)
+    get_plugin_button.click(fn=get_plugin_data, inputs=plugin_guid, outputs=plugin_output)
 
-    ts_code.change(fn=update_detected_functions, inputs=ts_code, outputs=[function_display, functions_json])
-    function_display.change(fn=update_functions_json, inputs=function_display, outputs=functions_json)
-    execute_button.click(fn=execute_code, inputs=ts_code, outputs=output)
-
-    demo.launch()
+# Launch Gradio app
+demo.launch()

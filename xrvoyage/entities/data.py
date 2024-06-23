@@ -3,6 +3,7 @@ from ..models.data import PutDataRequestDTO  # Import only the existing model
 from ..common.config import get_app_config
 from ..common.exceptions import ApiError
 from ..handlers.http import HttpHandler
+from logzero import logger
 
 class DataHandler:
     def __init__(self, token_strategy: TokenStrategy):
@@ -13,6 +14,30 @@ class DataHandler:
             token_strategy (TokenStrategy): The strategy to get the auth token
         """
         self._http_handler = HttpHandler(token_strategy)
+
+    # async def put_data(self, args: dict, name: str):
+    #     payload = {
+    #         "data": {
+    #             "object": {
+    #                 "metadata": {
+    #                     "solarsystem_guid": self.xr.project_guid,  # Directly using project_guid
+    #                     "solarsystem_name": "shiptype.systemcruiser NeuxPeterFaction",
+    #                     "type": "data.type.default"
+    #                 }
+    #             },
+    #             "response": args
+    #         },
+    #         "name": name
+    #     }
+        
+    #     data_request = PutDataRequestDTO(**payload)
+        
+    #     try:
+    #         response = self.xr.data_handler.put_data(data_request)
+    #         logger.info("Data sent successfully: %s", response)
+    #     except Exception as e:
+    #         logger.error("Error sending data: %s", str(e))
+
 
     def put_data(self, data_request: PutDataRequestDTO) -> dict:
         """
