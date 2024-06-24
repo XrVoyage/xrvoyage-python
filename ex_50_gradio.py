@@ -33,19 +33,35 @@ def get_plugin_data(plugin_guid):
         logger.error(f"Error fetching plugin: {str(e)}")
         return f"Error fetching plugin: {str(e)}"
 
+def toggle_dark_mode():
+    return """
+    () => {
+        document.body.classList.toggle('dark');
+    }
+    """
+
+#document.body.classList.toggle('dark');
 # Gradio interface
-with gr.Blocks(theme=gr.themes.Monochrome()) as demo:
+with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
-            plugin_guid = gr.Textbox(value=settings.XRVOYAGE_CURRENT_PLUGIN, lines=1, label="Plugin GUID", interactive=True)
-            get_plugin_button = gr.Button("GET PLUGIN")
-            add_button = gr.Button("Call Add Five")
-            add_output = gr.Label(value="Result will show here")
+            with gr.Tab("Get Plugin"):
+                plugin_guid = gr.Textbox(value=settings.XRVOYAGE_CURRENT_PLUGIN, lines=1, label="Plugin GUID", interactive=True)
+                get_plugin_button = gr.Button("GET PLUGIN")
+            with gr.Tab("State Test"):               
+                add_button = gr.Button("Call Add Five")
+                add_output = gr.Label(value="Result will show here")
+            with gr.Tab("Theme"):                 
+                dark_mode_button = gr.Button("Toggle Dark Mode")
         with gr.Column(scale=2):
-            plugin_output = gr.Code(language='typescript', lines=20, label="Plugin Data")
+            with gr.Tab("Current XrVoyage Plugin"):
+                plugin_output = gr.Code(language='typescript', lines=20, label="XR Voyage Plugin Data")
 
     add_button.click(fn=call_add_five, inputs=None, outputs=add_output)
     get_plugin_button.click(fn=get_plugin_data, inputs=plugin_guid, outputs=plugin_output)
+    dark_mode_button.click(None, [], [], js=toggle_dark_mode())
 
 # Launch Gradio app
 demo.launch()
+
+

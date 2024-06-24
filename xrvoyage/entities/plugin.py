@@ -16,7 +16,7 @@ class PluginHandler:
         self._http_handler = HttpHandler(token_strategy)
         self.settings = get_app_config()  # Moved here
 
-    async def get_plugin_by_guid(self, guid: str) -> dict:
+    def get_plugin_by_guid(self, guid: str) -> dict:
         """
         Get a plugin by its GUID.
 
