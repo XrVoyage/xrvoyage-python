@@ -44,7 +44,7 @@ def text_to_speech(text, output_file):
     }
     body = f"""
     <speak version='1.0' xml:lang='en-US'>
-        <voice xml:lang='en-US' xml:gender='Female' name='en-US-JessaNeural'>
+        <voice xml:lang='en-US' name='en-CA-LiamNeural'>
             {text}
         </voice>
     </speak>
