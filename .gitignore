@@ -2,6 +2,7 @@ xr-oai/
 xroai/
 structure_storage/
 output.wav
+node_modules
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
