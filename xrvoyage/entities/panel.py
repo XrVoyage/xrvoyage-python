@@ -1,3 +1,5 @@
+import logzero
+import json
 from ..handlers.auth import TokenStrategy
 from ..models.panel import PanelEvent  # Assuming a PanelEvent model exists
 from ..common.config import get_app_config
@@ -27,10 +29,10 @@ class PanelHandler:
         settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/panel'
-        response = self._http_handler.put(url, json=panel_event)
+        response = self._http_handler.put(url, json=panel_event.json(by_alias=True))
         return response
 
-    def get_panel_by_guid(self, guid: str) -> dict:
+    def get_panel_by_guid(self, guid: str) -> PanelEvent:
         """
         Get a panel by its GUID.
 
@@ -38,13 +40,13 @@ class PanelHandler:
             guid (str): The panel GUID.
 
         Returns:
-            dict: The JSON response from the server.
+            PanelEvent: The retrieved panel event.
         """
         settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/panel/{guid}'
         response = self._http_handler.get(url)
-        return response
+        return PanelEvent(**response)  # Directly use the dictionary
 
     def post_panel(self, guid: str, panel_event: PanelEvent) -> dict:
         """
@@ -60,7 +62,10 @@ class PanelHandler:
         settings = get_app_config()
         api_base_url = settings.XRVOYAGE_API_BASE_URL.removesuffix('/')
         url = f'{api_base_url}/panel/{guid}'
-        response = self._http_handler.post(url, json=panel_event)
+        json_payload = panel_event.model_dump_json(by_alias=True, indent=2)
+        #logzero.logger.debug(f"Panel Event Payload: {json_payload}")
+        logzero.logger.info(f'POST /panel/{guid}')
+        response = self._http_handler.post(url, json=json.loads(json_payload))
         return response
 
     def delete_panel(self, guid: str) -> dict:

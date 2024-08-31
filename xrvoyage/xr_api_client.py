@@ -15,9 +15,8 @@ from xrvoyage.handlers.auth import get_token_strategy
 from xrvoyage.common.static import get_version
 
 class XrApiClient:
-    def __init__(self, ship_guid: str):
+    def __init__(self):
         self.version = get_version()
-        self.ship_guid = ship_guid
         self.token_strategy = get_token_strategy()
         self.data_webhook = DataWebhookHandler(self.token_strategy)
         self.webhooks_xrweb = Webhooks_XRWebHandler(self.token_strategy)
@@ -39,7 +38,8 @@ class XrApiClient:
         self.total += 5
         return f"Current Total: {self.total}"          
 
-    async def connect(self):
+    async def connect(self, ship_guid: str):
+        self.ship_guid = ship_guid
         self.wss = WssHandler(self.token_strategy, self.decorators)
         loop = asyncio.get_event_loop()
 
