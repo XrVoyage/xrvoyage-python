@@ -4,7 +4,8 @@ def get_git_semver():
     describe_command = ["git", "describe", "--tags"]
     result = subprocess.run(describe_command, stdout=subprocess.PIPE, text=True)
     describe_output = result.stdout.strip()
-
+    #describe_output = "v1.1-18-g0112814"
+    #describe_output = "v1.1"
     if "-" in describe_output:
         first, second, _ = describe_output.split("-")
         first = first.lstrip("v")
@@ -13,9 +14,9 @@ def get_git_semver():
         first = describe_output.lstrip("v")
         semver = f"{first}.0"
 
-    # Ensure the third number is set to zero for tagged versions
-    if ".0" not in semver:
-        semver += ".0"
+    # # Ensure the third number is set to zero for tagged versions
+    # if ".0" not in semver:
+    #     semver += ".0"
 
     print(semver)
 
