@@ -7,6 +7,10 @@ from ..common.exceptions import ApiError
 from ..handlers.http import HttpHandler
 
 class PanelHandler:
+    status_code = None
+    message = None
+    response = None
+    
     def __init__(self, token_strategy: TokenStrategy):
         """
         Panel Handler Constructor
@@ -66,6 +70,9 @@ class PanelHandler:
         #logzero.logger.debug(f"Panel Event Payload: {json_payload}")
         logzero.logger.info(f'POST /panel/{guid}')
         response = self._http_handler.post(url, json=json.loads(json_payload))
+        if response is None:
+            self.status_code = self._http_handler.status_code
+            self.message = self._http_handler.message
         return response
 
     def delete_panel(self, guid: str) -> dict:
