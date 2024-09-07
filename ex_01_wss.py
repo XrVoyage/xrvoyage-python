@@ -3,7 +3,7 @@ import asyncio
 import json
 import xrvoyage
 from xrvoyage import XrApiClient
-from xrvoyage.handlers.decorators import eventIngress
+#from xrvoyage.handlers.decorators import eventIngress
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,18 +15,19 @@ load_dotenv()
 print("XrVoyage Version: ", xrvoyage.__version__)
 
 # Using credentials to obtain the token so it can be used for API calls
-xr = XrApiClient()
-ship_guid = "878EBE0DA02A4B68991E96D034853F9E" # Cadu's Ship
+ship_guid = "C9EECCC7826249E386B45B78D8A14B19" # Peter's Ship
+xrclient = XrApiClient(ship_guid)
 
-@eventIngress([
-    "xr.data.wh1", 
-    "xr.data.llm-choice-source", 
-    "xr.data.llm-choice-destination",         
-    "xr.rt.status.ship.crew",
-    "xr.rt.status.ship.geo",
-    "xr.data.vr-quiz-data",
-    "xr.data.vr-quiz-theme"
-    ])
+
+    # "xr.data.wh1", 
+    # "xr.data.ps001", 
+    # "xr.data.llm-choice-source", 
+    # "xr.data.llm-choice-destination",         
+    # "xr.rt.status.ship.crew",
+    # "xr.rt.status.ship.geo",
+    # "xr.data.vr-quiz-data",
+    # "xr.data.vr-quiz-theme"
+@xrclient.decorators.eventIngress(["xr.data.ps001"])
 def handle_events(event: dict):
     event_type = event.get("type")
     print(f"Handling event of type '{event_type}'")
@@ -35,7 +36,7 @@ def handle_events(event: dict):
 
 async def main():
     # Connect to the WebSocket and listen for events
-    await xr.wss.connect(ship_guid)  # Await the async connect method
+    await xrclient.connect()  # Await the async connect method
     
     # Call the function from ex_02_datahook.py to send the payload
     # from ex_02_datahook import DataHookTester
@@ -45,20 +46,20 @@ async def main():
 
     # Call the function from ex_02_datahook.py to send the payload
     from ex_04_events import XREventsTester
-    xrtester = XREventsTester(xr)
+    xrtester = XREventsTester(xrclient)
     # response = xrtester.send_event_xr_rt_status_ship_geo()
     # response = xrtester.send_event_xr_rt_status_ship_crew()
     # response = xrtester.send_event_xr_data_llm_source()
     # response = xrtester.send_event_xr_data_llm_destination()
-    response = xrtester.send_event_xr_data_vr_quiz_data()
+    # response = xrtester.send_event_xr_data_vr_quiz_data()
     # print("XREVENTS SEND PAYLOAD", response)
 
     try:
         # Run the event loop for a while to demonstrate
-        await asyncio.sleep(90)  # Adjust the sleep time as needed for your testing
+        await asyncio.sleep(180)  # Adjust the sleep time as needed for your testing
     finally:
         # Destroy the WebSocket connection when done
-        await xr.wss.destroy()
+        await xrclient.wss.destroy()
 
 if __name__ == "__main__":
     asyncio.run(main())

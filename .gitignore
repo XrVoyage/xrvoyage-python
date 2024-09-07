@@ -1,6 +1,16 @@
+ex_*
+start*
+nxops*
 xr-oai/
 xroai/
+nxops/
+kubexr/
 structure_storage/
+output.wav
+node_modules
+playground/puppeteer/node_modules/*
+playground/screenshots/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -165,3 +175,4 @@ cython_debug/
 .idea/
 
 poetry.lock
+None

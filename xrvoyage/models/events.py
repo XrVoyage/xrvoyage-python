@@ -6,6 +6,16 @@ class ClientInfo(pydantic.BaseModel):
     session: str
     timestamp_utc: str
 
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+        str_strip_whitespace = True
+        json_encoders = {
+            str: lambda v: v.isoformat() if isinstance(v, str) else v,
+        }
+        exclude_unset = True
+        exclude_none = True
+
 
 class XRWebhookEvent(pydantic.BaseModel):
     source: str | None = None
@@ -24,13 +34,23 @@ class XRWebhookEvent(pydantic.BaseModel):
     ship_guid: str | None = None
     project_guid: str | None = None
 
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+        str_strip_whitespace = True
+        json_encoders = {
+            str: lambda v: v.isoformat() if isinstance(v, str) else v,
+        }
+        exclude_unset = True
+        exclude_none = True
+
 
 class XRWebhookEventBatch(pydantic.BaseModel):
     xr_rt: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.rt',
         default_factory=lambda: []
     )
-    xr_data: List[XRWebhookEvent]= pydantic.Field(
+    xr_data: List[XRWebhookEvent] = pydantic.Field(
         alias='xr.data',
         default_factory=lambda: []
     )
@@ -38,3 +58,13 @@ class XRWebhookEventBatch(pydantic.BaseModel):
         alias='xr.nrt',
         default_factory=lambda: []
     )
+
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+        str_strip_whitespace = True
+        json_encoders = {
+            str: lambda v: v.isoformat() if isinstance(v, str) else v,
+        }
+        exclude_unset = True
+        exclude_none = True

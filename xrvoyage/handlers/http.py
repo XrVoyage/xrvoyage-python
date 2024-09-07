@@ -9,6 +9,9 @@ class ApiError(Exception):
         super().__init__(f"API Error {status_code}: {body}")
 
 class HttpHandler:
+    status_code = None
+    message = None
+    response = None
     def __init__(self, token_strategy):
         """
         HTTP Handler Constructor
@@ -43,9 +46,17 @@ class HttpHandler:
             kwargs['json'] = payload
 
         response = requests.request(method, url, **kwargs)
+        self.status_code = response.status_code
+        self.message = response.reason
+        if response.status_code == 304 or not response.content:
+            self.response = None
+        else:
+            self.response = response.json() if response.ok else None
+
         if not response.ok:
-            raise ApiError(status_code=response.status_code, body=response.text)
-        return response.json()
+            raise ApiError(status_code=self.status_code, body=response.text)
+
+        return self.response
 
     def post(self, url: str, json: BaseModel) -> dict:
         """
